@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, LayoutDashboard, Zap, Map as MapIcon, Terminal, Settings, Bell, Search } from 'lucide-react';
 import clsx from 'clsx';
-import { useSystemHealth } from '../hooks/useSystemHealth';
+import { useSystemHealth } from '../../../hooks/useSystemHealth';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();

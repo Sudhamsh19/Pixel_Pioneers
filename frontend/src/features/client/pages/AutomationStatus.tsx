@@ -1,8 +1,8 @@
 import { ShieldCheck, Flag, TrendingUp, TrendingDown } from 'lucide-react';
-import { useSystemHealth } from '../hooks/useSystemHealth';
-import { useLiveTraffic } from '../hooks/useLiveTraffic';
+import { useSystemHealth } from '../../../hooks/useSystemHealth';
+import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
 import clsx from 'clsx';
-import type { Packet } from '../types';
+import type { Packet } from '../../../types';
 
 const AutomationStatus = () => {
     const { health } = useSystemHealth();

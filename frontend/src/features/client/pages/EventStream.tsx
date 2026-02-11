@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useLiveTraffic } from '../hooks/useLiveTraffic';
+import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 

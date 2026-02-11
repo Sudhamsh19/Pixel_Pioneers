@@ -1,6 +1,6 @@
 import { Radar, ShieldBan, Wand2, Timer, AlertOctagon, AlertTriangle } from 'lucide-react';
-import { useSystemHealth } from '../hooks/useSystemHealth';
-import { useLiveTraffic } from '../hooks/useLiveTraffic';
+import { useSystemHealth } from '../../../hooks/useSystemHealth';
+import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
 import clsx from 'clsx';
 
 const CommandCenter = () => {

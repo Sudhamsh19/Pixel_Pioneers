@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
-import { useSystemHealth } from '../hooks/useSystemHealth';
-import { useLiveTraffic } from '../hooks/useLiveTraffic';
+import { useSystemHealth } from '../../../hooks/useSystemHealth';
+import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
 
 const ThreatMap = () => {
     const { health } = useSystemHealth();

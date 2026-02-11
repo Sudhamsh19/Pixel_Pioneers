@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldAlert, Zap, Radio, Globe } from 'lucide-react';
 import clsx from 'clsx';
-import { useSystemHealth } from '../hooks/useSystemHealth';
+import { useSystemHealth } from '../../../hooks/useSystemHealth';
 
 const Dashboard = () => {
     const { health } = useSystemHealth();
