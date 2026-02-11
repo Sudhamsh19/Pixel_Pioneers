@@ -9,4 +9,5 @@ class VectorStore:
 
     def search(self, query_embedding, k=3):
         D, I = self.index.search(np.array(query_embedding), k)
+
         return I[0]
