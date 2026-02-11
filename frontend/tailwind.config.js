@@ -8,22 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#135bec",
-        "primary-dark": "#0d43b3",
+        primary: "#ff4d00",
+        "primary-dark": "#b33600",
+        "accent-red": "#ef4444",
         "background-light": "#f6f6f8",
-        "background-dark": "#101622",
-        "surface-dark": "#1a2234",
-        "surface-darker": "#151b29",
-        "danger": "#ef4444",
-        "success": "#10b981",
-        "warning": "#f59e0b",
-        "alert-red": "#ef4444",
-        "alert-orange": "#f97316",
-        "success-green": "#22c55e",
+        "background-dark": "#0f0f12",
+        "surface-dark": "#16161a",
       },
       fontFamily: {
         "display": ["Space Grotesk", "sans-serif"],
-        "mono": ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
         "lg": "0.5rem",
