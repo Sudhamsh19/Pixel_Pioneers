@@ -147,7 +147,7 @@ const Dashboard = () => {
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 border-l-4 border-primary pl-3">Operating Consoles</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Command Center */}
-                    <Link to="/command-center" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
+                    <Link to="/client/command-center" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
                         <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent z-10"></div>
                         <div className="absolute inset-0 p-6 flex flex-col justify-end border-2 border-transparent hover:border-primary/50 z-20 transition-colors">
                             <div className="mb-auto">
@@ -165,7 +165,7 @@ const Dashboard = () => {
                     </Link>
 
                     {/* Threat Intel */}
-                    <Link to="/map" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
+                    <Link to="/client/map" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
                         <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent z-10"></div>
                         <div className="absolute inset-0 p-6 flex flex-col justify-end border-2 border-transparent hover:border-cyan-500/50 z-20 transition-colors">
                             <div className="mb-auto">
@@ -183,7 +183,7 @@ const Dashboard = () => {
                     </Link>
 
                     {/* Automation Status */}
-                    <Link to="/automation" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
+                    <Link to="/client/automation" className="group relative block h-64 rounded-2xl overflow-hidden shadow-lg transform hover:-translate-y-1 transition-all duration-300 bg-surface-darker">
                         <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-transparent z-10"></div>
                         <div className="absolute inset-0 p-6 flex flex-col justify-end border-2 border-transparent hover:border-purple-500/50 z-20 transition-colors">
                             <div className="mb-auto">

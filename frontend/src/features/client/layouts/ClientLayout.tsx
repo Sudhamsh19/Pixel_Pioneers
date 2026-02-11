@@ -9,11 +9,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     const { health } = useSystemHealth();
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Overview', path: '/' },
-        { icon: Shield, label: 'Command Center', path: '/command-center' },
-        { icon: Zap, label: 'Automation', path: '/automation' },
-        { icon: MapIcon, label: 'Threat Map', path: '/map' },
-        { icon: Terminal, label: 'Event Stream', path: '/events' },
+        { icon: LayoutDashboard, label: 'Overview', path: '/client/dashboard' },
+        { icon: Shield, label: 'Command Center', path: '/client/command-center' },
+        { icon: Zap, label: 'Automation', path: '/client/automation' },
+        { icon: MapIcon, label: 'Threat Map', path: '/client/map' },
+        { icon: Terminal, label: 'Event Stream', path: '/client/events' },
     ];
 
     return (
