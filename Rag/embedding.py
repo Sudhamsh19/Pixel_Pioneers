@@ -11,4 +11,5 @@ def load_embedding_model():
 
 def create_embeddings(documents):
     model = load_embedding_model()
+
     return model.encode(documents)
