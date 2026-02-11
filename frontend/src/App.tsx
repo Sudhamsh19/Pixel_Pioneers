@@ -45,6 +45,7 @@ function App() {
           <AdminLayout>
             <Routes>
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="incidents/review/:id" element={<IncidentReview />} />
               <Route path="incidents" element={<IncidentReview />} />
               <Route path="compliance" element={<ComplianceReports />} />
               <Route path="policy" element={<PolicyConfig />} />

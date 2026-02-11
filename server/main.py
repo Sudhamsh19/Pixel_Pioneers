@@ -25,13 +25,17 @@ COUNTRY_COORDS = {
     "North Korea": [40.3399, 127.5101], "Unknown": [0, 0]
 }
 
-# --- GLOBAL STATE (In-Memory Database) ---
-# Since this is a hackathon, we use global variables instead of a SQL DB.
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from database import get_db, TrafficLog, AutoBlocked, ManualReview, init_db
+
+# Initialize DB on startup
+init_db()
+
+# --- GLOBAL STATE (Configuration Only) ---
 class SystemState:
     def __init__(self):
-        self.history = []         # Stores last 100 packets
-        self.active_incidents = [] # Threats waiting for Portal B review
-        self.audit_log = []       # Permanent log of all actions
+        # We keep stats in memory for performance, but sync critical logs to DB
         self.stats = {
             "scanned": 0,
             "threats_detected": 0,
@@ -66,8 +70,12 @@ else:
 # This thread mimics live traffic coming into the router
 def traffic_simulator():
     index = 0
+    # Create a dedicated session for the background thread
+    from database import SessionLocal
+    
     while True:
         if state.is_running:
+            db = SessionLocal()
             try:
                 # 1. Get Next Packet
                 row = traffic_df.iloc[index % len(traffic_df)]
@@ -81,7 +89,7 @@ def traffic_simulator():
                 # 3. Enrich Data (Fake Metadata)
                 fake_ip = f"192.168.1.{random.randint(10, 200)}"
                 fake_country = random.choice(list(COUNTRY_COORDS.keys()))
-                timestamp = datetime.now().isoformat()
+                timestamp = datetime.now() # Use datetime object for DB
                 
                 # Fake Confidence
                 if pred_text == "Normal Traffic":
@@ -89,20 +97,20 @@ def traffic_simulator():
                 else:
                     confidence = random.uniform(0.75, 0.99)
 
-                packet = {
-                    "id": index,
-                    "timestamp": timestamp,
-                    "src_ip": fake_ip,
-                    "country": fake_country,
-                    "lat": COUNTRY_COORDS[fake_country][0],
-                    "lon": COUNTRY_COORDS[fake_country][1],
-                    "type": pred_text,
-                    "confidence": confidence,
-                    "destination_port": int(row.get("Destination Port", 0)),
-                    "action": "MONITOR"
-                }
+                # 4. Create Traffic Log Entry
+                traffic_log = TrafficLog(
+                    timestamp=timestamp,
+                    src_ip=fake_ip,
+                    country=fake_country,
+                    lat=COUNTRY_COORDS[fake_country][0],
+                    lon=COUNTRY_COORDS[fake_country][1],
+                    type=pred_text,
+                    confidence=confidence,
+                    destination_port=int(row.get("Destination Port", 0)),
+                    action="MONITOR"
+                )
 
-                # 4. SOAR Logic (The Brain)
+                # 5. SOAR Logic (The Brain)
                 state.stats["scanned"] += 1
                 
                 if pred_text != "Normal Traffic":
@@ -110,24 +118,47 @@ def traffic_simulator():
                     
                     # Check Auto-Block Policy
                     if confidence >= state.config["auto_block_threshold"]:
-                        packet["action"] = "AUTO_BLOCKED"
+                        traffic_log.action = "AUTO_BLOCKED"
                         state.stats["auto_blocked"] += 1
-                        # Log to audit trail immediately
-                        state.audit_log.append({**packet, "handled_by": "SYSTEM_AUTOMATION"})
+                        
+                        # Add to AutoBlocked Table
+                        auto_block_entry = AutoBlocked(
+                            timestamp=timestamp,
+                            src_ip=fake_ip,
+                            country=fake_country,
+                            limit_reached=f"Confidence > {state.config['auto_block_threshold']*100}%",
+                            confidence=confidence,
+                            type=pred_text
+                        )
+                        db.add(auto_block_entry)
+                        
                     else:
                         # Send to Portal B (Human Review)
-                        packet["action"] = "PENDING_REVIEW"
-                        # Only add if not already flooding the queue
-                        if len(state.active_incidents) < 10: 
-                            state.active_incidents.append(packet)
+                        traffic_log.action = "PENDING_REVIEW"
+                        
+                        # Add to ManualReview Table (Only if not duplicate/flooding - simplified for DB)
+                        pending_count = db.query(ManualReview).filter(ManualReview.status == "PENDING").count()
+                        if pending_count < 20: # cap pending queue
+                            manual_entry = ManualReview(
+                                timestamp=timestamp,
+                                src_ip=fake_ip,
+                                country=fake_country,
+                                type=pred_text,
+                                confidence=confidence,
+                                destination_port=int(row.get("Destination Port", 0)),
+                                status="PENDING"
+                            )
+                            db.add(manual_entry)
 
-                # 5. Update History (Rolling Buffer)
-                state.history.insert(0, packet)
-                if len(state.history) > 100:
-                    state.history.pop()
+                # Save Traffic Log
+                db.add(traffic_log)
+                db.commit()
 
             except Exception as e:
                 print(f"Simulation Error: {e}")
+                db.rollback()
+            finally:
+                db.close() # Important to close session in thread loop
 
         # Wait based on config speed
         time.sleep(state.config["simulation_speed"])
@@ -150,71 +181,96 @@ app.add_middleware(
 # === PORTAL A ENDPOINTS (Read-Only / Monitoring) ===
 
 @app.get("/api/system/health")
-def get_system_health():
+def get_system_health(db: Session = Depends(get_db)):
     """For Page A0: System Overview"""
+    pending_count = db.query(ManualReview).filter(ManualReview.status == "PENDING").count()
     uptime_seconds = int(time.time() - state.stats["uptime_start"])
     return {
-        "status": "HEALTHY" if len(state.active_incidents) < 5 else "DEGRADED",
+        "status": "HEALTHY" if pending_count < 5 else "DEGRADED",
         "uptime_seconds": uptime_seconds,
         "traffic_processed": f"{state.stats['scanned'] / 1000:.1f}k",
         "automation_rate": f"{100 * (state.stats['auto_blocked'] / (state.stats['threats_detected'] + 1)):.1f}%"
     }
 
 @app.get("/api/traffic/live")
-def get_live_traffic():
+def get_live_traffic(db: Session = Depends(get_db)):
     """For Page A1: Command Center & A4: Event Stream"""
-    return state.history[:20] # Return last 20 packets
+    # Get last 20 logs from DB
+    logs = db.query(TrafficLog).order_by(TrafficLog.timestamp.desc()).limit(20).all()
+    return logs
 
 @app.get("/api/threats/map")
-def get_threat_map():
+def get_threat_map(db: Session = Depends(get_db)):
     """For Page A3: Global Map"""
-    # Filter only threats
-    threats = [p for p in state.history if p["type"] != "Normal Traffic"]
-    return threats
+    # Filter only threats from last 100 logs
+    logs = db.query(TrafficLog).filter(TrafficLog.type != "Normal Traffic").order_by(TrafficLog.timestamp.desc()).limit(100).all()
+    return logs
 
 # === PORTAL B ENDPOINTS (Admin / Action) ===
 
 @app.get("/api/incidents/pending")
-def get_pending_incidents():
+def get_pending_incidents(db: Session = Depends(get_db)):
     """For Page B1 & B2: Analyst Queue"""
-    return state.active_incidents
+    return db.query(ManualReview).filter(ManualReview.status == "PENDING").all()
 
 class ActionRequest(BaseModel):
     action: str # "BLOCK" or "IGNORE"
     analyst_id: str = "admin_user"
 
 @app.post("/api/incidents/{packet_id}/resolve")
-def resolve_incident(packet_id: int, req: ActionRequest):
+def resolve_incident(packet_id: int, req: ActionRequest, db: Session = Depends(get_db)):
     """For Page B2: Take Action"""
-    # Find the incident
-    incident = next((i for i in state.active_incidents if i["id"] == packet_id), None)
+    # Find the incident in ManualReview table
+    incident = db.query(ManualReview).filter(ManualReview.id == packet_id).first()
     
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found or already resolved")
 
-    # Remove from active queue
-    state.active_incidents.remove(incident)
-
-    # Update Stats & Audit Log
+    # Update Status
+    incident.status = "RESOLVED"
+    incident.action_taken = "MANUAL_BLOCK" if req.action == "BLOCK" else "FALSE_POSITIVE"
+    incident.analyst_id = req.analyst_id
+    incident.resolved_at = datetime.utcnow()
+    
+    # Update Stats
     if req.action == "BLOCK":
         state.stats["manual_blocked"] += 1
-        incident["action"] = "MANUAL_BLOCK"
-    else:
-        incident["action"] = "FALSE_POSITIVE"
-    
-    # Log it
-    state.audit_log.append({
-        **incident,
-        "handled_by": req.analyst_id,
-        "resolved_at": datetime.now().isoformat()
-    })
+        
+    db.commit()
     
     return {"status": "success", "action_taken": req.action}
 
 @app.get("/api/logs/audit")
-def get_audit_log():
+def get_audit_log(db: Session = Depends(get_db)):
     """For Page B3: Audit Logs"""
-    return state.audit_log
+    # Fetch resolved manual reviews + auto blocked (limit 50 combined for now)
+    manual_logs = db.query(ManualReview).filter(ManualReview.status == "RESOLVED").limit(25).all()
+    auto_logs = db.query(AutoBlocked).limit(25).all()
+    
+    # We simulate a unified log structure for the frontend
+    combined = []
+    for m in manual_logs:
+        combined.append({
+            "id": m.id,
+            "timestamp": m.timestamp,
+            "src_ip": m.src_ip,
+            "type": m.type,
+            "action": m.action_taken,
+            "handled_by": m.analyst_id
+        })
+    for a in auto_logs:
+        combined.append({
+            "id": a.id,
+            "timestamp": a.timestamp,
+            "src_ip": a.src_ip,
+            "type": a.type,
+            "action": "AUTO_BLOCKED",
+            "handled_by": "SYSTEM_AUTOMATION"
+        })
+        
+    # Sort by timestamp desc
+    combined.sort(key=lambda x: x["timestamp"] or datetime.min, reverse=True)
+    return combined
 
 @app.post("/api/config/update")
 def update_config(threshold: float):
