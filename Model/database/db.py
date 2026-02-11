@@ -1,12 +1,24 @@
-import sqlite3
+import psycopg2
 
-DB_NAME = "incidents.db"
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "your_db_name",
+    "user": "your_username",
+    "password": "your_password",
+    "port": "5432"
+}
 
 def execute_query(sql, params=()):
-    conn = sqlite3.connect(DB_NAME)
+    conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
     cursor.execute(sql, params)
-    result = cursor.fetchall()
+    
+    try:
+        result = cursor.fetchall()
+    except:
+        result = None
+
     conn.commit()
+    cursor.close()
     conn.close()
     return result
