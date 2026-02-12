@@ -89,7 +89,7 @@ def traffic_simulator():
                 # 3. Enrich Data (Fake Metadata)
                 fake_ip = f"192.168.1.{random.randint(10, 200)}"
                 fake_country = random.choice(list(COUNTRY_COORDS.keys()))
-                timestamp = datetime.now() # Use datetime object for DB
+                timestamp = datetime.utcnow() # Use UTC consistently
                 
                 # Fake Confidence
                 if pred_text == "Normal Traffic":
@@ -185,11 +185,27 @@ def get_system_health(db: Session = Depends(get_db)):
     """For Page A0: System Overview"""
     pending_count = db.query(ManualReview).filter(ManualReview.status == "PENDING").count()
     uptime_seconds = int(time.time() - state.stats["uptime_start"])
+    
+    # Severity distribution (Simulated based on confidence levels)
+    critical = db.query(TrafficLog).filter(TrafficLog.confidence >= 0.95, TrafficLog.type != "Normal Traffic").count()
+    high = db.query(TrafficLog).filter(TrafficLog.confidence >= 0.85, TrafficLog.confidence < 0.95, TrafficLog.type != "Normal Traffic").count()
+    medium = db.query(TrafficLog).filter(TrafficLog.confidence >= 0.70, TrafficLog.confidence < 0.85, TrafficLog.type != "Normal Traffic").count()
+    low = db.query(TrafficLog).filter(TrafficLog.confidence < 0.70, TrafficLog.type != "Normal Traffic").count()
+
     return {
         "status": "HEALTHY" if pending_count < 5 else "DEGRADED",
         "uptime_seconds": uptime_seconds,
         "traffic_processed": f"{state.stats['scanned'] / 1000:.1f}k",
-        "automation_rate": f"{100 * (state.stats['auto_blocked'] / (state.stats['threats_detected'] + 1)):.1f}%"
+        "automation_rate": f"{100 * (state.stats['auto_blocked'] / (state.stats['threats_detected'] + 1)):.1f}%",
+        "active_threats": state.stats['threats_detected'],
+        "blocked_ips": state.stats['auto_blocked'] + state.stats['manual_blocked'],
+        "severity_dist": {
+            "critical": critical,
+            "high": high,
+            "medium": medium,
+            "low": low,
+            "total": critical + high + medium + low
+        }
     }
 
 @app.get("/api/traffic/live")
@@ -239,6 +255,46 @@ def resolve_incident(packet_id: int, req: ActionRequest, db: Session = Depends(g
     db.commit()
     
     return {"status": "success", "action_taken": req.action}
+
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
+# ... existing code ...
+
+@app.get("/api/stats/velocity")
+def get_decision_velocity(db: Session = Depends(get_db)):
+    """For Page A2: Decision Velocity Chart (Cumulative Running Total)"""
+    now = datetime.utcnow()
+    # The start of our 10-minute window for the graph
+    window_start = now - timedelta(minutes=10)
+    
+    results = []
+    for i in range(10):
+        # We want the total count up to each minute point (Running Total)
+        # Bar 0: Total count up to (now - 9m)
+        # Bar 1: Total count up to (now - 8m)
+        # ...
+        # Bar 9: Total count up to (now)
+        end_time = window_start + timedelta(minutes=i+1)
+        
+        auto_count = db.query(TrafficLog).filter(
+            TrafficLog.timestamp <= end_time,
+            TrafficLog.action == "AUTO_BLOCKED"
+        ).count()
+        
+        human_count = db.query(TrafficLog).filter(
+            TrafficLog.timestamp <= end_time,
+            TrafficLog.action != "AUTO_BLOCKED",
+            TrafficLog.type != "Normal Traffic"
+        ).count()
+        
+        results.append({
+            "hour": end_time.minute,
+            "automated": auto_count,
+            "human": human_count
+        })
+    
+    return results
 
 @app.get("/api/logs/audit")
 def get_audit_log(db: Session = Depends(get_db)):

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, ShieldAlert, Zap, Radio, Globe } from 'lucide-react';
 import clsx from 'clsx';
+import { TiTick } from "react-icons/ti";
+import { FcApprove } from "react-icons/fc";
 import { useSystemHealth } from '../../../hooks/useSystemHealth';
 
 const Dashboard = () => {
@@ -68,8 +70,8 @@ const Dashboard = () => {
                                     ENABLED
                                 </div>
                             </div>
-                            <div className="h-8 w-14 bg-primary/20 rounded-full p-1 border border-primary/10 relative">
-                                <div className="w-6 h-6 bg-primary rounded-full absolute right-1 shadow-lg shadow-primary/40"></div>
+                            <div >
+                                <TiTick className="w-16 h-12 text-orange-500" />
                             </div>
                         </div>
 
@@ -84,8 +86,8 @@ const Dashboard = () => {
                                     ACTIVE
                                 </div>
                             </div>
-                            <div className="h-8 w-14 bg-accent-red/20 rounded-full p-1 border border-accent-red/10 relative">
-                                <div className="w-6 h-6 bg-accent-red rounded-full absolute right-1 shadow-lg shadow-accent-red/40"></div>
+                            <div >
+                                <FcApprove className="w-12 h-12" />
                             </div>
                         </div>
                     </div>
@@ -181,10 +183,10 @@ const Dashboard = () => {
                                     <path className="text-gray-100 dark:text-white/5"
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none" stroke="currentColor" strokeWidth="3" />
-                                    <path className="text-primary drop-shadow-[0_0_8px_rgba(255,77,0,0.5)]"
+                                    <path className="text-primary drop-shadow-[0_0_8px_rgba(255,77,0,0.5)] transition-all duration-1000"
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none" stroke="currentColor"
-                                        strokeDasharray="98.2, 100"
+                                        strokeDasharray={`${parseFloat(health?.automation_rate || "0")}, 100`}
                                         strokeLinecap="round"
                                         strokeWidth="3" />
                                 </svg>

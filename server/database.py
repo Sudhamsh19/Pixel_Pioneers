@@ -6,7 +6,7 @@ from datetime import datetime
 # --- CONFIGURATION ---
 # Update with your actual PostgreSQL credentials if different
 # Format: postgresql://username:password@localhost:5432/database_name
-DATABASE_URL = "postgresql://postgres:saketh123@localhost:5432/idsdashboard"
+DATABASE_URL = "postgresql://postgres:chandu123@localhost:5432/idsdashboard"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -1,17 +1,22 @@
 import { ShieldCheck, Flag, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSystemHealth } from '../../../hooks/useSystemHealth';
-import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
-import clsx from 'clsx';
-import type { Packet } from '../../../types';
+import { useDecisionVelocity } from '../../../hooks/useDecisionVelocity';
 
 const AutomationStatus = () => {
     const { health } = useSystemHealth();
-    const { traffic } = useLiveTraffic();
+    const { velocityData } = useDecisionVelocity();
+    
+    // Improved scaling logic for better visual distinction
+    const allValues = velocityData.flatMap(d => [d.automated, d.human]);
+    const maxVal = Math.max(...allValues, 10);
+    const minVal = Math.min(...allValues, 0);
+    
+    // Use a baseline that is slightly below the minimum value to emphasize differences
+    // but don't let it go below 0. A 20% "zoom" into the active range.
+    const baseline = Math.max(0, minVal - (maxVal - minVal) * 0.2);
+    const range = Math.max(maxVal - baseline, 1);
 
-    // Filter relevant actions
-    const automatedActions = traffic.filter(p => p.action !== 'MONITOR');
-
-    return (
+    return (    
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* KPIs Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,14 +98,25 @@ const AutomationStatus = () => {
                         </div>
                     </div>
                     <div className="flex-1 flex items-end gap-2 sm:gap-4 justify-between pt-4 pb-2 border-b border-slate-200 dark:border-slate-700">
-                        {[0, 4, 8, 12, 16, 20].map((hour) => (
-                            <div key={hour} className="w-full flex flex-col gap-1 h-full justify-end group cursor-pointer relative">
-                                <div className="w-full bg-slate-600/80 hover:bg-slate-500 rounded-t-sm transition-all" style={{ height: `${Math.random() * 20 + 10}%` }}></div>
-                                <div className="w-full bg-primary hover:bg-blue-600 rounded-t-sm transition-all" style={{ height: `${Math.random() * 40 + 30}%` }}></div>
-                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-500">{hour.toString().padStart(2, '0')}:00</div>
+                        {velocityData.map((data, idx) => (
+                            <div key={idx} className="w-full flex flex-col gap-1 h-full justify-end group cursor-pointer relative">
+                                <div 
+                                    className="w-full bg-slate-600/80 hover:bg-slate-500 rounded-t-sm transition-all min-h-[4px]" 
+                                    style={{ height: `${Math.max(((data.human - baseline) / range) * 95, 5)}%` }}
+                                    title={`Human: ${data.human}`}
+                                ></div>
+                                <div 
+                                    className="w-full bg-primary hover:bg-blue-600 rounded-t-sm transition-all min-h-[4px]" 
+                                    style={{ height: `${Math.max(((data.automated - baseline) / range) * 100, 8)}%` }}
+                                    title={`Automated: ${data.automated}`}
+                                    ></div>
+                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-500">{data.hour.toString().padStart(2, '0')}m</div>
                             </div>
-                        ))}
+
+                                
+                            ))}
                     </div>
+                    
                 </div>
 
                 {/* Donut / Ratio Chart */}
@@ -130,80 +146,8 @@ const AutomationStatus = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Recent Actions List */}
-            <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700/50 rounded-xl flex flex-col overflow-hidden h-[400px]">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-surface-darker/50">
-                    <h3 className="font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        Live Automation Stream
-                    </h3>
-                </div>
-                <div className="overflow-y-auto flex-1">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 dark:bg-surface-darker text-xs uppercase text-slate-500 font-medium sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th className="px-6 py-3 tracking-wider">Status</th>
-                                <th className="px-6 py-3 tracking-wider">Action Type</th>
-                                <th className="px-6 py-3 tracking-wider">Target Entity</th>
-                                <th className="px-6 py-3 tracking-wider">Reasoning</th>
-                                <th className="px-6 py-3 tracking-wider">Confidence</th>
-                                <th className="px-6 py-3 tracking-wider text-right">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                            {automatedActions.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Waiting for automation events...</td>
-                                </tr>
-                            ) : (
-                                automatedActions.map((action, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td className="px-6 py-3 whitespace-nowrap">
-                                            <span className={clsx("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                                                action.action === 'AUTO_BLOCKED' ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                                                    action.action === 'MANUAL_BLOCK' ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                            )}>
-                                                <span className={clsx("w-1.5 h-1.5 rounded-full",
-                                                    (action.action === 'AUTO_BLOCKED' || action.action === 'MANUAL_BLOCK') ? "bg-red-500" : "bg-yellow-500"
-                                                )}></span>
-                                                {action.action}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3 text-slate-700 dark:text-slate-300 font-medium">{getActionDescription(action)}</td>
-                                        <td className="px-6 py-3 text-primary font-mono text-xs">{action.src_ip}</td>
-                                        <td className="px-6 py-3 text-slate-500 dark:text-slate-400">{action.type}</td>
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-16 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                                                    <div className={clsx("h-full rounded-full", action.confidence > 0.9 ? "bg-primary" : "bg-yellow-500")} style={{ width: `${action.confidence * 100}%` }}></div>
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{Math.round(action.confidence * 100)}%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-3 text-slate-400 text-right text-xs">
-                                            {new Date(action.timestamp).toLocaleTimeString()}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 };
-
-function getActionDescription(action: Packet): string {
-    if (action.type === 'DDoS Attack') return 'Firewall Rule Add';
-    if (action.type === 'Malware') return 'Endpoint Isolation';
-    if (action.type === 'Phishing') return 'Email Purge';
-    return 'Traffic Analysis';
-}
 
 export default AutomationStatus;

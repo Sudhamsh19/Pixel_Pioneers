@@ -3,6 +3,15 @@ export interface SystemHealth {
     uptime_seconds: number;
     traffic_processed: string;
     automation_rate: string;
+    active_threats: number;
+    blocked_ips: number;
+    severity_dist: {
+        critical: number;
+        high: number;
+        medium: number;
+        low: number;
+        total: number;
+    };
 }
 
 export interface Packet {
@@ -20,8 +29,17 @@ export interface Packet {
     resolved_at?: string;
 }
 
-export interface Incident extends Packet {
-    // Same structure as packet for now, but semantically distinct
+export type Incident = Packet;
+
+export interface AuditLog {
+    id: string;
+    type: string;
+    action: string;
+    timestamp: string;
+    src_ip: string;
+    country: string;
+    confidence: number;
+    handled_by?: string;
 }
 
 export interface ThreatMapData {
