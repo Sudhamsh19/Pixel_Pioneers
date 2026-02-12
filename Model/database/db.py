@@ -2,9 +2,9 @@ import psycopg2
 
 DB_CONFIG = {
     "host": "localhost",
-    "database": "your_db_name",
-    "user": "your_username",
-    "password": "your_password",
+    "database": "idsdashboard",
+    "user": "postgres",
+    "password": "saketh123",
     "port": "5432"
 }
 

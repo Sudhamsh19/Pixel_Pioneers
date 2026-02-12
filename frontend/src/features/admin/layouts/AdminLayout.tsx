@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, LayoutDashboard, FileText, Gavel, History, Settings, Bell, Search } from 'lucide-react';
 import clsx from 'clsx';
+import FloatingWidget from '../../../components/MasterAI/FloatingWidget';
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
@@ -63,6 +64,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
             </aside>
 
             {/* Main Content */}
+            {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {/* Header */}
                 <header className="h-16 bg-white dark:bg-[#151b29] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 z-10 shrink-0">
@@ -86,11 +88,12 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                 </header>
 
-                {/* Page Content */}
                 <div className="flex-1 overflow-auto bg-slate-50 dark:bg-[#0b1019]">
                     {children}
                 </div>
             </main>
+
+            <FloatingWidget />
         </div>
     );
 };

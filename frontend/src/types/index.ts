@@ -18,6 +18,26 @@ export interface Packet {
     action: "MONITOR" | "AUTO_BLOCKED" | "PENDING_REVIEW" | "MANUAL_BLOCK" | "FALSE_POSITIVE";
     handled_by?: string;
     resolved_at?: string;
+
+    // Context Data
+    target_username?: string;
+    burst_score?: number;
+    failed_attempts?: number;
+    traffic_volume?: string;
+    login_behavior?: string;
+}
+
+export interface ChatMessage {
+    role: 'user' | 'ai';
+    content: string;
+    timestamp: string;
+}
+
+export interface ChatSession {
+    id: number;
+    title: string;
+    created_at: string;
+    messages: ChatMessage[];
 }
 
 export interface Incident extends Packet {

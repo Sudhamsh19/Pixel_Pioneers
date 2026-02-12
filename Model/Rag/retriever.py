@@ -1,7 +1,7 @@
-from .embeddings import load_embedding_model
+from .embedding import load_embedding_model
 import numpy as np
 
-class Retriever:
+class RAGSystem:
     def __init__(self, documents, vector_store):
         self.documents = documents
         self.vector_store = vector_store

@@ -28,6 +28,13 @@ class TrafficLog(Base):
     confidence = Column(Float)
     destination_port = Column(Integer)
     action = Column(String) # "MONITOR"
+    
+    # Context Data Enhancements
+    target_username = Column(String, nullable=True)
+    burst_score = Column(Float, nullable=True)
+    failed_attempts = Column(Integer, nullable=True)
+    traffic_volume = Column(String, nullable=True)
+    login_behavior = Column(String, nullable=True)
 
 class AutoBlocked(Base):
     """Stores incidents automatically blocked by the system"""
@@ -59,6 +66,31 @@ class ManualReview(Base):
     action_taken = Column(String, nullable=True) # "MANUAL_BLOCK", "FALSE_POSITIVE"
     analyst_id = Column(String, nullable=True)
     resolved_at = Column(DateTime, nullable=True)
+
+    # Context Data Enhancements
+    target_username = Column(String, nullable=True)
+    burst_score = Column(Float, nullable=True)
+    failed_attempts = Column(Integer, nullable=True)
+    traffic_volume = Column(String, nullable=True)
+    login_behavior = Column(String, nullable=True)
+
+class ChatSession(Base):
+    """Stores a conversation session between user and AI"""
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    title = Column(String, default="New Conversation")
+
+class ChatMessage(Base):
+    """Stores individual messages within a session"""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, index=True) # Foreign Key relationship can be added if needed
+    role = Column(String) # "user" or "ai"
+    content = Column(Text)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
 # --- INITIALIZATION ---
 def init_db():
