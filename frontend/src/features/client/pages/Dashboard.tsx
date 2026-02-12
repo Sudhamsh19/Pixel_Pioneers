@@ -1,5 +1,6 @@
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Activity, ShieldAlert, Zap, Radio, Globe } from 'lucide-react';
+import { ArrowRight, Activity, ShieldAlert, Zap, Globe } from 'lucide-react';
 import clsx from 'clsx';
 import { TiTick } from "react-icons/ti";
 import { FcApprove } from "react-icons/fc";
@@ -7,6 +8,18 @@ import { useSystemHealth } from '../../../hooks/useSystemHealth';
 
 const Dashboard = () => {
     const { health } = useSystemHealth();
+
+    const healthScore =75;
+
+
+    const sparklineData = useMemo(() => 
+        [30, 50, 40, 70, 55, 45, 80, 60, 40, 30, 20, 45].map(h => 
+            health ? Math.min(100, Math.max(15, h + (Math.floor(Math.random() * 20) - 10))) : h
+        ), [health]);
+
+    const trafficCircleValue = useMemo(() => 
+        health ? 70 + (Math.floor(Math.random() * 20)) : 0
+    , [health]);
 
     return (
         <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 relative z-10">
@@ -69,12 +82,9 @@ const Dashboard = () => {
                                 <FcApprove className="w-12 h-12" />
                             </div>
                         </div>
-                        <div className="h-8 w-14 bg-amber-500/20 rounded-full p-1 relative">
-                            <div className="w-6 h-6 bg-amber-500 rounded-full absolute right-1 shadow-lg"></div>
-                        </div>
+                        
                     </div>
                 </div>
-            </div>
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
@@ -96,14 +106,14 @@ const Dashboard = () => {
                             </div>
 
                             <div className="relative w-24 h-24">
-                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <svg className="w-full h-full transform" viewBox="0 0 36 36">
                                     <path className="text-gray-100 dark:text-white/5"
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none" stroke="currentColor" strokeWidth="3" />
                                     <path className="text-primary drop-shadow-[0_0_8px_rgba(255,77,0,0.5)] transition-all duration-1000"
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none" stroke="currentColor"
-                                        strokeDasharray={`${parseFloat(health?.automation_rate || "0")}, 100`}
+                                        strokeDasharray={`${trafficCircleValue}, 100`}
                                         strokeLinecap="round"
                                         strokeWidth="3" />
                                 </svg>
@@ -112,8 +122,8 @@ const Dashboard = () => {
                         </div>
                         {/* Sparkline decoration */}
                         <div className="h-12 w-full flex items-end justify-between gap-1 opacity-70">
-                            {[30, 50, 40, 70, 55, 45, 80, 60, 40, 30, 20, 45].map((h, i) => (
-                                <div key={i} className={clsx("w-1/12 rounded-t-sm", i === 7 ? "bg-primary animate-pulse" : "bg-primary/30")} style={{ height: `${h}%` }}></div>
+                            {sparklineData.map((h, i) => (
+                                <div key={i} className={clsx("w-1/12 rounded-t-sm transition-all duration-500", i === sparklineData.length - 1 ? "bg-primary animate-pulse" : "bg-primary/30")} style={{ height: `${h}%` }}></div>
                             ))}
                         </div>
                     </div>
@@ -128,7 +138,7 @@ const Dashboard = () => {
                                 <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wide">System Health</h3>
                                 <div className="flex items-baseline mt-1 space-x-2">
                                     <span className="text-4xl font-bold text-slate-900 dark:text-white">
-                                        {health?.status === 'HEALTHY' ? '98%' : '75%'}
+                                        {health ? `${healthScore}%` : '...'}
                                     </span>
                                     <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Score</span>
                                 </div>
@@ -139,7 +149,12 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div className="w-full bg-slate-100 dark:bg-black/30 rounded-full h-2 overflow-hidden mt-6">
-                            <div className="bg-gradient-to-r from-red-600 to-amber-500 h-full rounded-full" style={{ width: health?.status === 'HEALTHY' ? '98%' : '75%' }}></div>
+                            <div className={clsx(
+                                "h-full rounded-full transition-all duration-1000 bg-gradient-to-r",
+                                healthScore > 85 ? "from-emerald-500 to-emerald-400" : 
+                                healthScore > 60 ? "from-amber-500 to-amber-400" : 
+                                "from-red-600 to-red-500"
+                            )} style={{ width: `${healthScore}%` }}></div>
                         </div>
                     </div>
                 </div>
@@ -158,9 +173,9 @@ const Dashboard = () => {
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-[140px]">Percentage of threats neutralized automatically.</p>
                         </div>
                         <div className="relative w-24 h-24 flex items-center justify-center">
-                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <svg className="w-full h-full transform" viewBox="0 0 36 36">
                                 <path className="text-slate-100 dark:text-white/5" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
-                                <path className="text-purple-500 drop-shadow-md" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="98.2, 100" strokeLinecap="round" strokeWidth="3"></path>
+                                <path className="text-purple-500 drop-shadow-md" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${parseFloat(health?.automation_rate || "0")}, 100`} strokeLinecap="round" strokeWidth="3"></path>
                             </svg>
                             <Zap className="absolute text-purple-500 w-8 h-8" />
                         </div>

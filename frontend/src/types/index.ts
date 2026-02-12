@@ -5,6 +5,7 @@ export interface SystemHealth {
     automation_rate: string;
     active_threats: number;
     blocked_ips: number;
+    events_per_second?: number;
     severity_dist: {
         critical: number;
         high: number;

@@ -1,5 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { useState, useEffect, Fragment, useMemo } from 'react';
 import { useSystemHealth } from '../../../hooks/useSystemHealth';
 import { useLiveTraffic } from '../../../hooks/useLiveTraffic';
 import type { LatLngExpression } from 'leaflet';
@@ -10,6 +9,7 @@ import {
     Polyline,
     CircleMarker,
 } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 
 /* ================= Attack Colors ================= */
@@ -21,9 +21,22 @@ const attackColors: Record<string, string> = {
     bot: "#d946ef",
 };
 
+const getAttackColor = (type: string = "") => {
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes('ddos')) return attackColors.ddos;
+    if (lowerType.includes('dos')) return attackColors.dos;
+    if (lowerType.includes('brute')) return attackColors.brute;
+    if (lowerType.includes('bot')) return attackColors.bot;
+    return "#ef4444";
+};
+
 /* ================= Curve Generator ================= */
 
-function generateCurve(from: [number, number], to: [number, number], points = 80): LatLngExpression[] {
+function generateCurve(
+    from: [number, number],
+    to: [number, number],
+    points = 80
+): LatLngExpression[] {
     const curve: LatLngExpression[] = [];
 
     const distance = Math.sqrt(
@@ -110,15 +123,30 @@ function TravelingDot({ path, color }: TravelingDotProps) {
 const ThreatMap = () => {
     const { health } = useSystemHealth();
     const { traffic } = useLiveTraffic();
+    const [selectedFilter, setSelectedFilter] = useState('all');
 
-    const threats = traffic.filter(p => p.type !== 'Normal Traffic');
+    const allThreats = useMemo(() => 
+        traffic.filter(p => p.type !== 'Normal Traffic'),
+    [traffic]);
+
+    const threats = useMemo(() => {
+        if (selectedFilter === 'all') return allThreats;
+        return allThreats.filter(t => t.type?.toLowerCase()?.includes(selectedFilter) ?? false);
+    }, [allThreats, selectedFilter]);
+
+    const filters = [
+        { id: 'all', label: 'All Attacks', color: '#94a3b8' },
+        { id: 'ddos', label: 'DDoS', color: attackColors.ddos },
+        { id: 'dos', label: 'DoS', color: attackColors.dos },
+        { id: 'brute', label: 'Brute Force', color: attackColors.brute },
+        { id: 'bot', label: 'Bot Attacks', color: attackColors.bot },
+    ];
 
     return (
         <div className="relative h-full w-full bg-background-dark overflow-hidden flex flex-col">
 
             {/* ================= MAP ================= */}
             <div className="absolute inset-0">
-
                 <MapContainer
                     center={[20, 0]}
                     zoom={2}
@@ -135,23 +163,17 @@ const ThreatMap = () => {
                     {threats.map((threat) => {
 
                         const from: [number, number] = [threat.lat, threat.lon];
-                        const to: [number, number] = [37.0902, -95.7129]; // destination (USA)
+                        const to: [number, number] = [37.0902, -95.7129];
 
                         const curvePath = generateCurve(from, to);
 
-                        const color =
-                            attackColors[threat.type?.toLowerCase()] || "#ef4444";
+                        const color = getAttackColor(threat.type);
 
                         return (
                             <Fragment key={threat.id}>
-
                                 <Polyline
                                     positions={curvePath}
-                                    pathOptions={{
-                                        color,
-                                        weight: 2,
-                                        opacity: 0.3,
-                                    }}
+                                    pathOptions={{ color, weight: 2, opacity: 0.3 }}
                                 />
 
                                 <Polyline
@@ -191,14 +213,17 @@ const ThreatMap = () => {
                 </MapContainer>
             </div>
 
-            {/* ================= OVERLAY HEADER ================= */}
+            {/* ================= HEADER ================= */}
             <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-start z-[500] pointer-events-none">
+
                 <div className="pointer-events-auto">
                     <h1 className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">
                         Global Threat Vector
                     </h1>
                     <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className={`w-2 h-2 rounded-full animate-pulse ${
+                            health?.status === 'HEALTHY' ? 'bg-emerald-500' : 'bg-red-500'
+                        }`}></span>
                         <h2 className="text-xl font-bold text-white tracking-tight">
                             Portal A Operations
                         </h2>
@@ -206,16 +231,16 @@ const ThreatMap = () => {
                 </div>
 
                 <div className="hidden lg:flex gap-4 pointer-events-auto">
-                    <div className="bg-surface-dark/60 backdrop-blur-md border border-slate-700/50 px-4 py-2 rounded-lg flex flex-col items-center min-w-[120px]">
+                    <div className="bg-surface-dark/70 backdrop-blur-xl border border-slate-700/50 px-4 py-2 rounded-xl flex flex-col items-center min-w-[120px] shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
                         <span className="text-[10px] uppercase tracking-wider text-slate-400">
                             Events / Sec
                         </span>
                         <span className="text-lg font-bold text-white font-mono">
-                            2,450
+                            {health?.events_per_second?.toLocaleString() || '...'}
                         </span>
                     </div>
 
-                    <div className="bg-surface-dark/60 backdrop-blur-md border border-slate-700/50 px-4 py-2 rounded-lg flex flex-col items-center min-w-[120px] border-l-2 border-l-primary">
+                    <div className="bg-surface-dark/70 backdrop-blur-xl border border-slate-700/50 px-4 py-2 rounded-xl flex flex-col items-center min-w-[120px] border-l-2 border-l-primary shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
                         <span className="text-[10px] uppercase tracking-wider text-slate-400">
                             Auto-Blocked
                         </span>
@@ -226,37 +251,39 @@ const ThreatMap = () => {
                 </div>
             </div>
 
-            {/* ================= FLOATING LIST ================= */}
-            <div className="absolute bottom-8 left-8 w-64 bg-surface-dark/60 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 hidden md:block z-[500] border-l-4 border-l-alert-orange">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold text-white">
-                        Active Vectors
-                    </h3>
-                    <span className="text-[10px] bg-alert-orange/20 text-alert-orange px-1.5 py-0.5 rounded border border-alert-orange/20">
-                        LIVE
+            {/* ================= ATTACK FILTER PORTAL ================= */}
+            <div className="absolute bottom-8 right-8 w-64 bg-surface-dark/70 backdrop-blur-xl border border-slate-700/50 rounded-xl p-4 z-[500] shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center justify-between">
+                    Live Vector Filter
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded border border-primary/20">
+                        {threats.length} ACTIVE
                     </span>
-                </div>
+                </h3>
 
-                <ul className="space-y-2">
-                    {threats.slice(0, 3).map((t, i) => (
-                        <li key={i} className="flex items-center justify-between text-xs group cursor-pointer hover:bg-white/5 p-1 rounded transition-colors">
+                <div className="space-y-2">
+                    {filters.map((f) => (
+                        <button
+                            key={f.id}
+                            onClick={() => setSelectedFilter(f.id)}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg transition-all duration-200 text-xs font-medium border ${
+                                selectedFilter === f.id
+                                    ? "bg-white/10 border-white/20 text-white"
+                                    : "bg-transparent border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                            }`}
+                        >
                             <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-3 h-3 text-red-500" />
-                                <span className="text-slate-300 group-hover:text-white">
-                                    {t.type}
-                                </span>
+                                <span 
+                                    className="w-2 h-2 rounded-full" 
+                                    style={{ backgroundColor: f.color }}
+                                />
+                                {f.label}
                             </div>
-                            <span className="text-slate-500 font-mono">
-                                {t.country} -&gt; US
-                            </span>
-                        </li>
+                            {selectedFilter === f.id && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            )}
+                        </button>
                     ))}
-                    {threats.length === 0 && (
-                        <li className="text-xs text-slate-500">
-                            No active threats visualized.
-                        </li>
-                    )}
-                </ul>
+                </div>
             </div>
 
         </div>
@@ -264,4 +291,3 @@ const ThreatMap = () => {
 };
 
 export default ThreatMap;
-    
