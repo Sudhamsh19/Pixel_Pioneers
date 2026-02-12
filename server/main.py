@@ -73,6 +73,14 @@ def traffic_simulator():
     # Create a dedicated session for the background thread
     from database import SessionLocal
     
+    # --- DB RESET FOR NEW SCHEMA (Drop and Recreate) ---
+    # WARNING: destructive, but requested by user
+    print("Resetting Database Schema...")
+    from database import Base, engine
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    print("Database Reset Complete.")
+    
     while True:
         if state.is_running:
             db = SessionLocal()
@@ -97,6 +105,56 @@ def traffic_simulator():
                 else:
                     confidence = random.uniform(0.75, 0.99)
 
+                # --- NEW CONTEXT DATA GENERATION ---
+                target_username = None
+                burst_score = 0.0
+                failed_attempts = 0
+                traffic_volume = "Normal"
+                login_behavior = "Normal"
+
+                # Traffic Volume
+                if "DoS" in pred_text:
+                     traffic_volume = random.choices(["High", "Medium"], weights=[0.8, 0.2])[0]
+                elif pred_text == "Normal Traffic":
+                     traffic_volume = random.choices(["Normal", "Low"], weights=[0.7, 0.3])[0]
+                else:
+                     traffic_volume = random.choices(["Medium", "High"], weights=[0.6, 0.4])[0]
+
+                # Burst Score
+                if pred_text == "Normal Traffic":
+                    burst_score = round(random.uniform(0.0, 1.4), 2)
+                else:
+                    burst_score = round(random.uniform(1.5, 5.0), 2)
+
+                # Failed Attempts & Login Behavior
+                # Logic:
+                # - Brute Force / Bot / Web Attack -> "Detected" (High failed attempts, specific username)
+                # - DDoS / DoS / PortScan -> "Suspicious" (Some failed attempts, no specific username usually, but we can simmer it)
+                # - Normal -> "Normal"
+
+                is_brute_force = any(x in pred_text for x in ["Brute", "Force", "Patator", "Web Attack", "Sql", "XSS"])
+                is_bot = "Bot" in pred_text
+                is_dos = any(x in pred_text for x in ["DoS", "DDoS", "Heartbleed"])
+                is_scan = "Port" in pred_text or "Scan" in pred_text
+
+                if is_brute_force or is_bot:
+                    failed_attempts = random.randint(5, 50)
+                    login_behavior = "Detected"
+                    target_username = random.choice(["admin", "root", "user1", "test_user", "service_account", "postgres", "manager"])
+                elif is_dos or is_scan:
+                    failed_attempts = random.randint(1, 6) # DDoS doesn't necessarily fail logins, but might cause timeouts/errors
+                    login_behavior = "Suspicious"
+                    target_username = None # Usually targeting infrastructure, not accounts
+                elif "Normal" in pred_text:
+                    failed_attempts = random.randint(0, 3)
+                    login_behavior = "Normal"
+                    target_username = None
+                else:
+                    # Fallback for other attacks
+                    failed_attempts = random.randint(2, 10)
+                    login_behavior = "Suspicious"
+                    target_username = None
+
                 # 4. Create Traffic Log Entry
                 traffic_log = TrafficLog(
                     timestamp=timestamp,
@@ -107,7 +165,13 @@ def traffic_simulator():
                     type=pred_text,
                     confidence=confidence,
                     destination_port=int(row.get("Destination Port", 0)),
-                    action="MONITOR"
+                    action="MONITOR",
+                    # New Fields
+                    target_username=target_username,
+                    burst_score=burst_score,
+                    failed_attempts=failed_attempts,
+                    traffic_volume=traffic_volume,
+                    login_behavior=login_behavior
                 )
 
                 # 5. SOAR Logic (The Brain)
@@ -146,7 +210,13 @@ def traffic_simulator():
                                 type=pred_text,
                                 confidence=confidence,
                                 destination_port=int(row.get("Destination Port", 0)),
-                                status="PENDING"
+                                status="PENDING",
+                                # New Fields
+                                target_username=target_username,
+                                burst_score=burst_score,
+                                failed_attempts=failed_attempts,
+                                traffic_volume=traffic_volume,
+                                login_behavior=login_behavior
                             )
                             db.add(manual_entry)
 
@@ -169,6 +239,7 @@ sim_thread.start()
 
 # --- API ENDPOINTS ---
 app = FastAPI(title="Pixel Pioneers SOAR API")
+from ai.router import router as ai_router
 
 # Allow Frontend (React/Next.js) to call this API
 app.add_middleware(
@@ -177,6 +248,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(ai_router)
 
 # === PORTAL A ENDPOINTS (Read-Only / Monitoring) ===
 

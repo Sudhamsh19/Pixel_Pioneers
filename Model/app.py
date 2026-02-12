@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 
 from database.query_handler import extract_ip, handle_ip_query, handle_sql_query
-from rag.retriever import RAGSystem
-from rag.prompt_template import build_prompt
+from Rag.retriever import RAGSystem
+from Rag.prompt_template import build_prompt
 from llm.ollama_client import generate_response
 
 app = Flask(__name__)
