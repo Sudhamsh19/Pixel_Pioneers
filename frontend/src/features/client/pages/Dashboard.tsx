@@ -36,8 +36,7 @@ const Dashboard = () => {
                             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                             : "bg-red-500/10 border-red-500/20 text-red-500"
                     )}>
-                        <div className={clsx("w-2 h-2 rounded-full animate-pulse", health?.status === 'HEALTHY' ? "bg-emerald-500" : "bg-red-500")}></div>
-                        <span>SYSTEM STATUS: {health?.status || 'CONNECTING...'}</span>
+                        
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight">
                         AI-Driven Automated <br />
@@ -247,11 +246,11 @@ const Dashboard = () => {
             <div className="pt-8 border-t border-gray-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-600 font-mono">
                 <div className="flex items-center space-x-4">
                     <span>System Version: v4.2.0-rc3</span>
-                    <span>Server: US-EAST-1A</span>
+                    <span>Server: INDIA</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Database Connected</span>
                 </div>
                 <div className="mt-2 md:mt-0">
-                    © 2024 Enterprise Security Operations. Unauthorized access is prohibited.
+                    © 2026 Enterprise Security Operations. Unauthorized access is prohibited.
                 </div>
             </div>
         </div>

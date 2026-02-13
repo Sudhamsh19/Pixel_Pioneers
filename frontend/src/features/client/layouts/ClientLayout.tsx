@@ -51,13 +51,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <div className="p-4 border-t border-slate-800">
                     <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-dark transition-colors cursor-pointer">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-orange-400 flex items-center justify-center text-white text-xs font-bold">
-                            AU
+                            CU
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate text-slate-200">Admin User</p>
-                            <p className="text-xs text-slate-500 truncate">SecOps Lead</p>
+                            <p className="text-sm font-medium truncate text-slate-200">Client User</p>
+                            <p className="text-xs text-slate-500 truncate">SecOps User</p>
                         </div>
-                        <Settings className="w-4 h-4 text-slate-400" />
+                        
                     </div>
                 </div>
             </aside>
@@ -65,43 +65,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {/* Header */}
-                <header className="h-16 bg-surface-dark border-b border-slate-800 flex items-center justify-between px-6 z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="relative hidden sm:block">
-                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Search incidents..."
-                                className="pl-8 pr-4 py-1.5 text-sm bg-background-dark border-none rounded text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary w-64"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        {/* System Status */}
-                        <div className="hidden lg:flex items-center gap-3 mr-4 border-r border-slate-700 pr-4">
-                            <div className={clsx(
-                                "flex items-center gap-1.5 px-2 py-1 rounded border",
-                                health?.status === 'HEALTHY'
-                                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                                    : "bg-red-500/10 border-red-500/20 text-red-500"
-                            )}>
-                                <div className={clsx("w-1.5 h-1.5 rounded-full animate-pulse", health?.status === 'HEALTHY' ? "bg-emerald-500" : "bg-red-500")}></div>
-                                <span className="text-xs font-medium">{health?.status || 'CONNECTING...'}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800 border border-slate-700">
-                                <span className="text-xs font-medium text-slate-400">12ms Latency</span>
-                            </div>
-                        </div>
-
-                        <div className="h-8 w-px bg-slate-700 mx-1"></div>
-
-                        <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
-                    </div>
-                </header>
+                
 
                 {/* Page Content */}
                 <div className="flex-1 overflow-y-auto bg-background-dark">

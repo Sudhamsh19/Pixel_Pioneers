@@ -8,6 +8,7 @@ import {
     TileLayer,
     Polyline,
     CircleMarker,
+    ZoomControl,
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -154,11 +155,15 @@ const ThreatMap = () => {
                     maxBounds={[[-90, -180], [90, 180]]}
                     className="h-full w-full"
                     style={{ height: "100%", width: "100%", background: "#0f172a" }}
-                >
+                    zoomControl={false} // Disable default top-left control
+>
                     <TileLayer
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         noWrap={true}
                     />
+    
+                    {/* Add this component */}
+                    <ZoomControl position="bottomleft" />
 
                     {threats.map((threat) => {
 
@@ -236,7 +241,8 @@ const ThreatMap = () => {
                             Events / Sec
                         </span>
                         <span className="text-lg font-bold text-white font-mono">
-                            {health?.events_per_second?.toLocaleString() || '...'}
+                            {health?.severity_dist?.total?.toLocaleString() || '...'}
+
                         </span>
                     </div>
 

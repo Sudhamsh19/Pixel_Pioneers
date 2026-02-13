@@ -9,10 +9,8 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-        { icon: FileText, label: 'Incidents', path: '/admin/incidents' },
         { icon: History, label: 'Audit Logs', path: '/admin/compliance' },
-        { icon: Gavel, label: 'Policies', path: '/admin/policy' },
-        { icon: Settings, label: 'Settings', path: '/admin/settings' },
+        { icon: Gavel, label: 'Policy Governence', path: '/admin/policy' }
     ];
 
     return (
@@ -56,7 +54,6 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                             <p className="text-sm font-medium truncate text-slate-200">Admin User</p>
                             <p className="text-xs text-slate-500 truncate">SecOps Lead</p>
                         </div>
-                        <Settings className="w-4 h-4 text-slate-400" />
                     </div>
                 </div>
             </aside>
@@ -65,26 +62,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {/* Header */}
-                <header className="h-16 bg-surface-dark border-b border-slate-800 flex items-center justify-between px-6 z-10 shrink-0">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-white">
-                            Dashboard <span className="text-slate-500 font-normal mx-2">/</span> <span className="text-base font-normal text-slate-400">Shift Delta</span>
-                        </h1>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
-                            <span className="text-sm text-slate-400">Open Tickets:</span>
-                            <span className="text-lg font-bold text-white">12</span>
-                        </div>
-                        <div className="h-4 w-px bg-slate-700"></div>
-                        <button className="relative p-2 rounded-full hover:bg-slate-800 text-slate-400 transition-colors">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-surface-dark"></span>
-                        </button>
-                    </div>
-                </header>
+                    
 
                 {/* Page Content */}
                 <div className="flex-1 overflow-auto bg-background-dark">

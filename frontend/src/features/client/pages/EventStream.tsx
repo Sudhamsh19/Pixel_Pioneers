@@ -16,10 +16,7 @@ const EventStream = () => {
             {/* Toolbar */}
             <div className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-dark flex items-center justify-between px-6 flex-shrink-0 z-10">
                 <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <input className="pl-8 pr-4 py-1.5 text-sm bg-slate-100 dark:bg-background-dark border-none rounded text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:ring-1 focus:ring-primary w-64 font-mono" placeholder="Search logs..." type="text" />
-                    </div>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200"    >Live Event Stream</h2>
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-400 dark:text-slate-500 font-mono animate-pulse">RECEIVING DATA...</span>
@@ -32,9 +29,7 @@ const EventStream = () => {
                     {/* Header */}
                     <div className="h-8 bg-[#1a202c] border-b border-slate-800 flex items-center px-4 justify-between select-none shrink-0">
                         <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
-                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50"></div>
+                            
                         </div>
                         <div className="text-xs text-slate-500 font-medium">soar-stream-v1.4.2 @ root</div>
                         <div className="w-10"></div>
